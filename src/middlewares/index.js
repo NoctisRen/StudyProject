@@ -12,7 +12,6 @@ function errorHandler(err, req, res) {
   });
 }
 
-
 function timeSign(req, res, next) {
   console.log(new Date().toISOString());
   res.set('Accepted---At', new Date().toISOString());
