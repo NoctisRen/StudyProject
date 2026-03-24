@@ -1,0 +1,7 @@
+method: get
+url: http://localhost:8082/provider/students
+requestBody:
+  type: application/json
+  data: "  -H Content-Type: application/json\r
+
+    \  -d {\"faculty\": \"Computer Science\"}"

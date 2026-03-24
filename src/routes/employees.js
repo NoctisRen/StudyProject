@@ -1,14 +1,17 @@
 /* eslint-disable consistent-return */
 const express = require('express');
-const schema = require('../db/schema');
+const { employeeSchema } = require('../db/schema');  // 修改：使用解构赋值
 const db = require('../db/connection');
+const { authenticateJWT, authorize } = require('../middlewares/auth');  // 新增
 
 const employees = db.get('employees');
 
 const router = express.Router();
 
-/* Get all employees */
+// 保护所有员工路由 - 需要认证
+router.use(authenticateJWT);
 
+/* Get all employees */
 router.get('/', async (req, res, next) => {
   try {
     const allEmployees = await employees.find({});
@@ -47,11 +50,11 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-/* Create a new employee */
-router.post('/', async (req, res, next) => {
+/* Create a new employee - 需要管理员权限 */
+router.post('/', authorize('ROLE_ADMIN'), async (req, res, next) => {
   try {
     const { name, job } = req.body;
-    await schema.validateAsync({ name, job });
+    await employeeSchema.validateAsync({ name, job });  // 修改：使用 employeeSchema
 
     const employee = await employees.findOne({
       name,
@@ -75,12 +78,12 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-/* Update a specific employee */
-router.put('/:id', async (req, res, next) => {
+/* Update a specific employee - 需要管理员权限 */
+router.put('/:id', authorize('ROLE_ADMIN'), async (req, res, next) => {
   try {
     const { id } = req.params;
     const { name, job } = req.body;
-    const result = await schema.validateAsync({ name, job });
+    const result = await employeeSchema.validateAsync({ name, job });  // 修改：使用 employeeSchema
     const employee = await employees.findOne({
       _id: id,
     });
@@ -101,9 +104,8 @@ router.put('/:id', async (req, res, next) => {
   }
 });
 
-/* Delete a specific employee */
-// /655afa8196943302b03283bd
-router.delete('/:id', async (req, res, next) => {
+/* Delete a specific employee - 需要管理员权限 */
+router.delete('/:id', authorize('ROLE_ADMIN'), async (req, res, next) => {
   try {
     const { id } = req.params;
     const employee = await employees.findOne({

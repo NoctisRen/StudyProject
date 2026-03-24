@@ -1,0 +1,13 @@
+method: post
+url: http://localhost:8082/provider/students/by-faculty
+parameters:
+  header:
+    - name: Content-Type
+      value: application/json
+requestBody:
+  type: text/plain
+  data: "{\r
+
+    \  \"faculty\": \"Computer Science\"\r
+
+    }"

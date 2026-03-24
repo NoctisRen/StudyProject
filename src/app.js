@@ -2,6 +2,8 @@ const express = require('express');
 
 require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` });
 
+const authRoutes = require('./routes/auth');
+
 const morgan = require('morgan');
 const helmet = require('helmet');
 const bodyParser = require('body-parser');
@@ -22,14 +24,11 @@ app.use(morgan('dev'));
 app.use(bodyParser.json());
 app.use(timeSign);
 
-// app.set('views', `${__dirname}/ui-routes/views`);
-// app.use(express.static(`${__dirname}/ui-routes/public`));
-
-// app.set('view engine', 'ejs');
+// 注册认证路由（必须在其他路由之前）
+app.use('/api', authRoutes);
 
 const employees = require('./routes/employees');
 const ui = require('./ui-routes/index');
-
 const users = require('./routes/users');
 
 app.use('/api/employees', employees);

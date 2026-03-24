@@ -1,0 +1,15 @@
+method: put
+url: http://localhost:8082/provider/students/1
+parameters:
+  header:
+    - name: Content-Type
+      value: application/json
+requestBody:
+  type: application/json
+  data: "{\r
+
+    \  \"phone\": \"+7(999)888-77-66\",\r
+
+    \  \"address\": \"Moscow, Updated Address\"\r
+
+    }"

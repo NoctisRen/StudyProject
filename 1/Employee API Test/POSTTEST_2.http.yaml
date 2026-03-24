@@ -1,0 +1,9 @@
+method: post
+url: http://localhost:8082/provider/students/after-year
+parameters:
+  header:
+    - name: Content-Type
+      value: application/json
+requestBody:
+  type: text/plain
+  data: "{\r\n  \"year\": 2000\r\n}"
