@@ -67,6 +67,7 @@ router.post('/register', async (req, res, next) => {
     });
     
   } catch (error) {
+    error.statusCode = error.statusCode || 500;
     next(error);
   }
 });
@@ -125,6 +126,7 @@ router.post('/authenticate', async (req, res, next) => {
     });
     
   } catch (error) {
+    error.statusCode = error.statusCode || 500;
     next(error);
   }
 });
@@ -171,6 +173,7 @@ router.get('/account', authenticateJWT, async (req, res, next) => {
     });
     
   } catch (error) {
+    error.statusCode = error.statusCode || 500;
     next(error);
   }
 });

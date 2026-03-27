@@ -17,6 +17,7 @@ router.get('/', authorize('ROLE_ADMIN'), async (req, res, next) => {
     const allUsers = await users.find({}, { projection: { password: 0 } });  // 不返回密码
     res.json(allUsers);
   } catch (error) {
+    error.statusCode = error.statusCode || 500;
     next(error);
   }
 });
@@ -27,6 +28,7 @@ router.get('/jobs', async (req, res, next) => {
     const jobs = await employees.distinct('job');
     res.json(jobs);
   } catch (error) {
+    error.statusCode = error.statusCode || 500;
     next(error);
   }
 });
@@ -60,6 +62,7 @@ router.get('/range', authorize('ROLE_ADMIN'), async (req, res, next) => {
 
     res.json(usersInRange);
   } catch (error) {
+    error.statusCode = error.statusCode || 500;
     next(error);
   }
 });
@@ -81,6 +84,7 @@ router.get('/username/:username', async (req, res, next) => {
 
     res.json(user);
   } catch (error) {
+    error.statusCode = error.statusCode || 500;
     next(error);
   }
 });
@@ -109,6 +113,7 @@ router.get('/:id', async (req, res, next) => {
 
     res.json(user);
   } catch (error) {
+    error.statusCode = error.statusCode || 500;
     next(error);
   }
 });

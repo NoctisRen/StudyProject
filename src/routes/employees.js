@@ -17,6 +17,7 @@ router.get('/', async (req, res, next) => {
     const allEmployees = await employees.find({});
     res.json(allEmployees);
   } catch (error) {
+    error.statusCode = error.statusCode || 500;
     next(error);
   }
 });
@@ -27,6 +28,7 @@ router.get('/jobs', async (req, res, next) => {
     const jobs = await employees.distinct('job');
     res.json(jobs);
   } catch (error) {
+    error.statusCode = error.statusCode || 500;
     next(error);
   }
 });
@@ -41,11 +43,13 @@ router.get('/:id', async (req, res, next) => {
 
     if (!employee) {
       const error = new Error('Employee does not exist');
+      error.statusCode = 404;
       return next(error);
     }
 
     res.json(employee);
   } catch (error) {
+    error.statusCode = error.statusCode || 500;
     next(error);
   }
 });
@@ -63,7 +67,7 @@ router.post('/', authorize('ROLE_ADMIN'), async (req, res, next) => {
     // Employee already exists
     if (employee) {
       const error = new Error('Employee already exists');
-      res.status(409); // conflict error
+      error.statusCode = 409; // conflict error
       return next(error);
     }
 
@@ -74,6 +78,7 @@ router.post('/', authorize('ROLE_ADMIN'), async (req, res, next) => {
 
     res.status(201).json(newuser);
   } catch (error) {
+    error.statusCode = error.statusCode || 500;
     next(error);
   }
 });
@@ -100,6 +105,7 @@ router.put('/:id', authorize('ROLE_ADMIN'), async (req, res, next) => {
 
     res.json(updatedEmployee);
   } catch (error) {
+    error.statusCode = error.statusCode || 500;
     next(error);
   }
 });
@@ -124,6 +130,7 @@ router.delete('/:id', authorize('ROLE_ADMIN'), async (req, res, next) => {
       message: 'Employee has been deleted',
     });
   } catch (error) {
+    error.statusCode = error.statusCode || 500;
     next(error);
   }
 });

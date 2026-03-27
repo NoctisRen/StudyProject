@@ -1,0 +1,45 @@
+name: express-api
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: express-api-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - appnet
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "mongodb://localhost:27017/admin", "--eval", "db.runCommand({ ping: 1 }).ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: express-api
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      # app.js 会读取 `.env.${NODE_ENV}`，但这里直接用环境变量供 connection.js 使用
+      NODE_ENV: production
+      PORT: "8000"
+      DB_URL: "mongodb://mongo:27017/my-employees"
+      JWT_SECRET: "change-me-in-compose-or-env"
+    networks:
+      - appnet
+
+networks:
+  appnet:
+
+volumes:
+  mongo_data:
+
