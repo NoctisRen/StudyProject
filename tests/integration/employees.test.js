@@ -1,6 +1,6 @@
 const request = require('supertest');
 const {
-  createTestApp, seedAdminUser, seedRegularUser, cleanDatabase,
+  createTestApp, seedAdminUser, seedRegularUser, cleanDatabase, waitForMongo,
 } = require('../helpers/setup');
 
 let app;
@@ -8,6 +8,7 @@ let adminToken;
 let userToken;
 
 beforeAll(async () => {
+  await waitForMongo();
   await cleanDatabase();
   await seedAdminUser();
   await seedRegularUser();
@@ -24,7 +25,7 @@ beforeAll(async () => {
     .post('/api/authenticate')
     .send({ username: 'regularuser', password: 'user123' });
   userToken = userRes.body.id_token;
-});
+}, 60000);
 
 afterAll(async () => {
   await cleanDatabase();

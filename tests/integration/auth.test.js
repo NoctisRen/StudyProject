@@ -1,13 +1,15 @@
 const request = require('supertest');
-const { createTestApp, cleanDatabase } = require('../helpers/setup');
+const { createTestApp, cleanDatabase, waitForMongo } = require('../helpers/setup');
 
 let app;
 
 beforeAll(async () => {
+  // 等待 MongoDB 就绪（GitHub Actions service container 需要时间）
+  await waitForMongo();
   // 清空测试数据
   await cleanDatabase();
   app = createTestApp();
-});
+}, 60000);
 
 afterAll(async () => {
   await cleanDatabase();
