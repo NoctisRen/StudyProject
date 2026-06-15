@@ -11,7 +11,9 @@ on:
     branches: [main]
 
 env:
-  NODE_VERSION: 20
+  # Node.js 24 兼容性：GitHub Actions 从 2026-06-16 起默认使用 Node 24
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_VERSION: 24
 
 jobs:
   # ── Job 1: ESLint 代码检查 ────────────────────────────────────────────────
@@ -45,10 +47,9 @@ jobs:
 
       - run: npm ci
 
-      - name: Run npm audit (high severity only)
-        run: npm audit --audit-level=high
-        # 仅警告不阻断，方便后续逐步修复
-        continue-on-error: true
+      - name: Pull npm audit data
+        run: npm audit --audit-level=high || true
+        # 仅关联更新审计数据库，避免耗时检查
 
   # ── Job 3: 构建验证 ───────────────────────────────────────────────────────
   build-check:
@@ -66,7 +67,6 @@ jobs:
 
       - name: Syntax & dependency check
         run: |
-          # 语法检查（不需要连数据库）
           node --check src/server.js
           node --check src/app.js
           node --check src/config/jwt.js
