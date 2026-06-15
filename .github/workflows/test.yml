@@ -61,11 +61,11 @@ jobs:
       - name: Wait for MongoDB
         run: |
           for i in $(seq 1 30); do
-            if command -v mongosh &> /dev/null; then
-              mongosh --quiet mongodb://localhost:27017/admin --eval 'db.runCommand({ ping: 1 }).ok' && echo 'MongoDB ready' && break
-            elif command -v mongo &> /dev/null; then
-              mongo --quiet mongodb://localhost:27017/admin --eval 'db.runCommand({ ping: 1 }).ok' && echo 'MongoDB ready' && break
-            fi
+            node -e "
+              const http = require('http');
+              const req = http.get('http://localhost:27017', (res) => { process.exit(0); });
+              req.on('error', () => process.exit(1));
+            " && echo 'MongoDB ready' && break
             echo "Waiting for MongoDB... ($i)"
             sleep 1
           done
