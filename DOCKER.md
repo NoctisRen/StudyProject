@@ -1,152 +1,140 @@
-# Docker 部署与验证（Express API + MongoDB）
+# Docker 部署指南
 
-仓库链接（按作业要求）：`https://github.com/zagaris/express-api`
-
-本项目使用 **2 个容器**（B 方案）：
-- **`api`**：Express 后端（同时提供 EJS UI）
-- **`mongo`**：MongoDB 数据库
+本项目使用 **2 个容器**：
+- **`api`**：Express 后端（Node.js 24 + EJS UI）
+- **`mongo`**：MongoDB 7 数据库
 
 容器通过同一个 Compose 网络互通：`api` 使用 `mongodb://mongo:27017/my-employees` 连接数据库。
 
 ---
 
-## 1) 安装与环境检查（Windows）
+## 前置条件
 
-你需要安装并启动 Docker Desktop（建议启用 WSL2 后端）。
+- Docker Engine 24+（或 Docker Desktop）
+- Docker Compose v2+
 
-验证命令（PowerShell）：
+验证命令：
 
-```powershell
-wsl --status
+```bash
 docker --version
 docker compose version
 ```
 
-如果出现 **`Docker Desktop is unable to start`**：
-- 确认 Docker Desktop 已打开且右下角状态为 **Running**
-- 在 Docker Desktop Settings 里确认使用 **WSL2 backend**
-- 重启 Docker Desktop / 重启电脑后再试
+---
+
+## 文件说明
+
+| 文件 | 用途 |
+|------|------|
+| `Dockerfile` | 构建 API 镜像（Node 24 Alpine，生产依赖） |
+| `.dockerignore` | 排除 `node_modules`、`.env`、Git 等进镜像 |
+| `docker-compose.yml` | 编排 `api` + `mongo`，含健康检查和网络配置 |
 
 ---
 
-## 2) 项目里新增/使用的 Docker 文件
+## 构建并运行
 
-根目录文件：
-- **`Dockerfile`**：构建并运行后端（镜像内 `npm ci --omit=dev`，启动 `node src/server.js`）
-- **`.dockerignore`**：避免把 `node_modules`、`.env` 等打进镜像
-- **`docker-compose.yml`**：编排 `api` + `mongo` 两容器、网络、数据卷、健康检查
-
----
-
-## 3) 构建并运行两个容器
-
-在仓库根目录执行：
-
-```powershell
+```bash
+# 构建并后台启动
 docker compose up -d --build
-```
 
-说明：
-- `mongo` 会暴露到本机 `27017`（便于你用 Compass 连接调试）
-- `api` 会暴露到本机 `8000`
-- `mongo` 有健康检查，`api` 会等 `mongo` healthy 后启动
-
----
-
-## 4) 检查应用是否运行正常
-
-### 4.1 查看容器状态
-
-```powershell
+# 查看状态
 docker compose ps
-```
 
-你应看到两个服务：`api`、`mongo` 都是 Up。
-
-### 4.2 查看日志（分别检查两个容器）
-
-```powershell
-docker compose logs -f mongo
+# 查看日志
 docker compose logs -f api
 ```
 
-### 4.3 基础连通性检查
-
-```powershell
-Invoke-WebRequest -UseBasicParsing http://localhost:8000/api/authenticate
-```
-
-说明：该接口需要 token，会返回 401（这是正常的），关键是确认 **服务可访问**。
+服务启动后：
+- API 服务 → `http://localhost:8000`
+- MongoDB → `localhost:27017`
 
 ---
 
-## 5) 最小端到端接口测试（PowerShell）
+## 验证部署
 
-### 5.1 注册
+### 检查连通性（返回 401 是正常的，说明服务可访问）
 
-```powershell
-$body = @{ username = "testuser_docker"; password = "password123"; email = "testuser_docker@example.com" } | ConvertTo-Json
-Invoke-RestMethod -Uri "http://localhost:8000/api/register" -Method Post -Body $body -ContentType "application/json"
+```bash
+curl -s http://localhost:8000/api/authenticate
+# → {"error":"Authentication required",...}
 ```
 
-### 5.2 登录获取 Token
+### 注册用户
 
-```powershell
-$loginBody = @{ username = "testuser_docker"; password = "password123" } | ConvertTo-Json
-$loginResp = Invoke-RestMethod -Uri "http://localhost:8000/api/authenticate" -Method Post -Body $loginBody -ContentType "application/json"
-$token = $loginResp.id_token
+```bash
+curl -s -X POST http://localhost:8000/api/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","password":"password123","email":"test@example.com"}'
 ```
 
-### 5.3 访问受保护资源（示例）
+### 登录获取 Token
 
-```powershell
-Invoke-RestMethod -Uri "http://localhost:8000/api/employees" -Headers @{ Authorization = "Bearer $token" }
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8000/api/authenticate \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","password":"password123"}' | node -pe "JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).id_token")
+echo "$TOKEN"
 ```
 
-如果你需要验证管理员权限（创建员工/删改），需要把该用户在 MongoDB 中提升为 `ROLE_ADMIN`（见 README 的说明），或直接用数据库更新：
+### 访问员工 API
 
-```powershell
-docker exec -it express-api-mongo mongosh my-employees --eval "db.user.updateOne({username:'testuser_docker'}, {\$set: {roles:['ROLE_USER','ROLE_ADMIN']}})"
+```bash
+curl -s http://localhost:8000/api/employees \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-然后重新登录获取 token，再调用创建员工接口：
+### 创建员工（需要管理员权限）
 
-```powershell
-$token = (Invoke-RestMethod -Uri "http://localhost:8000/api/authenticate" -Method Post -Body $loginBody -ContentType "application/json").id_token
-$empBody = @{ name = "Docker Emp"; job = "Engineer" } | ConvertTo-Json
-Invoke-RestMethod -Uri "http://localhost:8000/api/employees" -Method Post -Body $empBody -ContentType "application/json" -Headers @{ Authorization = "Bearer $token" }
+```bash
+# 先将用户提升为管理员
+docker exec -it express-api-mongo mongosh my-employees \
+  --eval 'db.user.updateOne({username:"testuser"},{$set:{roles:["ROLE_USER","ROLE_ADMIN"]}})'
+
+# 重新登录获取 Token
+TOKEN=$(curl -s -X POST http://localhost:8000/api/authenticate \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","password":"password123"}' | node -pe "JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).id_token")
+
+# 创建员工
+curl -s -X POST http://localhost:8000/api/employees \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"name":"Docker 测试员工","job":"工程师"}'
 ```
 
 ---
 
-## 6) 停止容器运行
+## 停止容器
 
-```powershell
+```bash
+# 停止并删除容器
 docker compose down
-```
 
-如需同时删除 MongoDB 数据卷（清空数据）：
-
-```powershell
+# 同时删除 MongoDB 数据
 docker compose down -v
 ```
 
 ---
 
-## 7) 常用排查命令（按“两个容器”区分）
+## 常用排查询
 
-```powershell
-# 看状态
+```bash
+# 查看容器状态
 docker compose ps
 
-# 分别看日志
-docker compose logs -f mongo
+# 查看 API 日志
 docker compose logs -f api
 
-# 进入 mongo 容器
+# 进入 MongoDB 容器
 docker exec -it express-api-mongo mongosh
 
-# 在 api 容器内查看环境变量（确认 DB_URL/JWT_SECRET）
-docker exec -it express-api sh -lc "env | sort"
+# 查看 API 容器环境变量
+docker exec express-api env | sort
 ```
 
+---
+
+## CI 集成
+
+每次 push 到主分支，GitHub Actions 会自动构建 Docker 镜像验证正确性。详见 `.github/workflows/ci.yml` 中的 `docker-build` job。

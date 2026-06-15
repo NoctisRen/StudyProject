@@ -76,3 +76,24 @@ jobs:
           node --check src/routes/users.js
           node --check src/db/schema.js
           echo "✅ All source files pass syntax check"
+
+  # ── Job 4: Docker 镜像构建 ────────────────────────────────────────────────
+  docker-build:
+    name: Docker 构建
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: studyproject:ci
+
+      - name: Verify image exists
+        run: |
+          docker images --filter reference=studyproject:ci --format '{{.Repository}}:{{.Tag}} {{.Size}}'
