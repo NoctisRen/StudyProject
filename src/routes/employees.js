@@ -1,8 +1,8 @@
 /* eslint-disable consistent-return */
 const express = require('express');
-const { employeeSchema } = require('../db/schema');  // 修改：使用解构赋值
+const { employeeSchema } = require('../db/schema'); // 修改：使用解构赋值
 const db = require('../db/connection');
-const { authenticateJWT, authorize } = require('../middlewares/auth');  // 新增
+const { authenticateJWT, authorize } = require('../middlewares/auth'); // 新增
 
 const employees = db.get('employees');
 
@@ -58,7 +58,7 @@ router.get('/:id', async (req, res, next) => {
 router.post('/', authorize('ROLE_ADMIN'), async (req, res, next) => {
   try {
     const { name, job } = req.body;
-    await employeeSchema.validateAsync({ name, job });  // 修改：使用 employeeSchema
+    await employeeSchema.validateAsync({ name, job }); // 修改：使用 employeeSchema
 
     const employee = await employees.findOne({
       name,
@@ -88,7 +88,7 @@ router.put('/:id', authorize('ROLE_ADMIN'), async (req, res, next) => {
   try {
     const { id } = req.params;
     const { name, job } = req.body;
-    const result = await employeeSchema.validateAsync({ name, job });  // 修改：使用 employeeSchema
+    const result = await employeeSchema.validateAsync({ name, job }); // 修改：使用 employeeSchema
     const employee = await employees.findOne({
       _id: id,
     });

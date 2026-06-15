@@ -21,27 +21,27 @@ const userSchema = Joi.object({
     .messages({
       'string.min': 'Username must be at least 3 characters',
       'string.max': 'Username cannot exceed 50 characters',
-      'any.required': 'Username is required'
+      'any.required': 'Username is required',
     }),
   password: Joi.string()
     .min(6)
     .required()
     .messages({
       'string.min': 'Password must be at least 6 characters',
-      'any.required': 'Password is required'
+      'any.required': 'Password is required',
     }),
   email: Joi.string()
     .email()
     .required()
     .messages({
       'string.email': 'Invalid email format',
-      'any.required': 'Email is required'
+      'any.required': 'Email is required',
     }),
   roles: Joi.array()
     .items(Joi.string())
     .default(['ROLE_USER'])
     .messages({
-      'array.base': 'Roles must be an array of strings'
+      'array.base': 'Roles must be an array of strings',
     }),
   activated: Joi.boolean()
     .default(true),
@@ -52,18 +52,18 @@ const userSchema = Joi.object({
   createdDate: Joi.date()
     .default(Date.now),
   lastModifiedBy: Joi.string(),
-  lastModifiedDate: Joi.date()
+  lastModifiedDate: Joi.date(),
 });
 
 // 登录验证 Schema（用于 /api/authenticate）
 const loginSchema = Joi.object({
   username: Joi.string().required(),
-  password: Joi.string().required()
+  password: Joi.string().required(),
 });
 
 // 导出所有 schema
 module.exports = {
   employeeSchema,
   userSchema,
-  loginSchema
+  loginSchema,
 };

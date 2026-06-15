@@ -2,11 +2,10 @@ const express = require('express');
 
 require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` });
 
-const authRoutes = require('./routes/auth');
-
 const morgan = require('morgan');
 const helmet = require('helmet');
 const bodyParser = require('body-parser');
+const authRoutes = require('./routes/auth');
 const { notFound, errorHandler, timeSign } = require('./middlewares');
 
 const app = express();

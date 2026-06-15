@@ -1,7 +1,7 @@
 const express = require('express');
-const db = require('../db/connection');
 const { ObjectId } = require('mongodb');
-const { authenticateJWT, authorize } = require('../middlewares/auth');  // 新增
+const db = require('../db/connection');
+const { authenticateJWT, authorize } = require('../middlewares/auth'); // 新增
 
 const users = db.get('user');
 const employees = db.get('employees');
@@ -14,7 +14,7 @@ router.use(authenticateJWT);
 // 1. 获取所有用户 - 需要管理员权限
 router.get('/', authorize('ROLE_ADMIN'), async (req, res, next) => {
   try {
-    const allUsers = await users.find({}, { projection: { password: 0 } });  // 不返回密码
+    const allUsers = await users.find({}, { projection: { password: 0 } }); // 不返回密码
     res.json(allUsers);
   } catch (error) {
     error.statusCode = error.statusCode || 500;
@@ -37,28 +37,28 @@ router.get('/jobs', async (req, res, next) => {
 router.get('/range', authorize('ROLE_ADMIN'), async (req, res, next) => {
   try {
     const { start, end } = req.query;
-    
+
     // 验证参数
     if (!start || !end) {
-      return res.status(400).json({ 
-        error: 'Please provide both start and end parameters' 
+      return res.status(400).json({
+        error: 'Please provide both start and end parameters',
       });
     }
 
     // 验证 ID 格式
     if (!ObjectId.isValid(start) || !ObjectId.isValid(end)) {
-      return res.status(400).json({ 
-        error: 'Invalid ID format. IDs must be valid ObjectIds' 
+      return res.status(400).json({
+        error: 'Invalid ID format. IDs must be valid ObjectIds',
       });
     }
 
     // 查询 ID 范围内的用户
     const usersInRange = await users.find({
-      _id: { 
+      _id: {
         $gte: ObjectId.createFromHexString(start),
-        $lte: ObjectId.createFromHexString(end)
-      }
-    }, { projection: { password: 0 } });  // 不返回密码
+        $lte: ObjectId.createFromHexString(end),
+      },
+    }, { projection: { password: 0 } }); // 不返回密码
 
     res.json(usersInRange);
   } catch (error) {
@@ -71,14 +71,14 @@ router.get('/range', authorize('ROLE_ADMIN'), async (req, res, next) => {
 router.get('/username/:username', async (req, res, next) => {
   try {
     const { username } = req.params;
-    
-    const user = await users.findOne({ 
-      username: username 
-    }, { projection: { password: 0 } });  // 不返回密码
+
+    const user = await users.findOne({
+      username,
+    }, { projection: { password: 0 } }); // 不返回密码
 
     if (!user) {
-      return res.status(404).json({ 
-        error: 'User not found' 
+      return res.status(404).json({
+        error: 'User not found',
       });
     }
 
@@ -96,18 +96,18 @@ router.get('/:id', async (req, res, next) => {
 
     // 验证 ID 格式
     if (!ObjectId.isValid(id)) {
-      return res.status(400).json({ 
-        error: 'Invalid ID format. ID must be a valid ObjectId' 
+      return res.status(400).json({
+        error: 'Invalid ID format. ID must be a valid ObjectId',
       });
     }
 
-    const user = await users.findOne({ 
-      _id: ObjectId.createFromHexString(id) 
-    }, { projection: { password: 0 } });  // 不返回密码
+    const user = await users.findOne({
+      _id: ObjectId.createFromHexString(id),
+    }, { projection: { password: 0 } }); // 不返回密码
 
     if (!user) {
-      return res.status(404).json({ 
-        error: 'User not found' 
+      return res.status(404).json({
+        error: 'User not found',
       });
     }
 
