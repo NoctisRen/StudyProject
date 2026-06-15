@@ -31,6 +31,8 @@ jobs:
 
       - name: Run unit tests
         run: npx jest tests/unit --ci --verbose
+        env:
+          JWT_SECRET: test-secret-for-ci-only
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -58,8 +60,32 @@ jobs:
 
       - run: npm ci
 
+      - name: Check MongoDB connectivity
+        run: |
+          echo "Checking MongoDB connectivity..."
+          node -e "
+            const { MongoClient } = require('mongodb');
+            const url = 'mongodb://localhost:27017/test-my-employees';
+            console.log('Connecting to:', url);
+            const client = new MongoClient(url, { serverSelectionTimeoutMS: 15000 });
+            client.connect()
+              .then(() => client.db().admin().ping())
+              .then((r) => { console.log('MongoDB ping OK:', r); return client.close(); })
+              .then(() => process.exit(0))
+              .catch((e) => { console.error('MongoDB connection failed:', e.message); process.exit(1); });
+          "
+
       - name: Run integration tests
-        run: npx jest tests/integration --ci --verbose
+        run: |
+          npx jest tests/integration --ci --verbose 2>&1 | tee jest-output.txt
+          exit ${PIPESTATUS[0]}
         env:
           DB_URL: mongodb://localhost:27017/test-my-employees
           JWT_SECRET: test-secret-for-ci-only
+
+      - name: Upload jest output
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jest-integration-output
+          path: jest-output.txt
