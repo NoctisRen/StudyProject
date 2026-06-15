@@ -41,7 +41,7 @@ function createTestApp() {
   const app = express();
 
   app.use(require('helmet')());
-  app.use(require('body-parser').json());
+  app.use(express.json());
   app.use('/api', require('../../src/routes/auth'));
   app.use('/api/employees', require('../../src/routes/employees'));
   app.use('/api/users', require('../../src/routes/users'));
