@@ -1,292 +1,220 @@
-Express.js + MongoDB REST API 项目
-基于 Node.js、Express 和 MongoDB 构建的 RESTful API 服务，包含 JWT 认证和授权功能（JHipster 风格）。
+# Express.js + MongoDB REST API
 
-目录
-项目概述
+[![CI](https://github.com/NoctisRen/StudyProject/actions/workflows/ci.yml/badge.svg)](https://github.com/NoctisRen/StudyProject/actions/workflows/ci.yml)
+[![Tests](https://github.com/NoctisRen/StudyProject/actions/workflows/test.yml/badge.svg)](https://github.com/NoctisRen/StudyProject/actions/workflows/test.yml)
 
-技术栈
+基于 Node.js、Express 和 MongoDB 构建的 RESTful API 服务，包含 JWT 认证和基于角色的访问控制（RBAC），采用 JHipster 风格 JWT 实现。
 
-功能特性
+---
 
-项目结构
+## 目录
 
-安装与部署
+- [项目概述](#项目概述)
+- [技术栈](#技术栈)
+- [功能特性](#功能特性)
+- [快速开始](#快速开始)
+- [项目结构](#项目结构)
+- [环境配置](#环境配置)
+- [API 端点文档](#api-端点文档)
+- [测试指南](#测试指南)
+- [Docker 部署](#docker-部署)
+- [CI/CD](#cicd)
+- [常见问题](#常见问题)
 
-环境配置
+---
 
-数据库配置
+## 项目概述
 
-JWT 认证说明
+完整的 REST API，提供员工管理和用户管理功能，集成 JWT 认证和基于角色的访问控制（RBAC）。
 
-API 端点文档
+- 员工 CRUD（仅管理员可写）
+- 用户注册/登录/认证
+- JWT 无状态认证（24h 过期）
+- 角色鉴权：`ROLE_USER` / `ROLE_ADMIN`
+- Joi 请求参数校验
+- 统一错误处理
+- MongoDB（通过 `monk` 驱动）
 
-测试指南
+---
 
-常见问题
+## 技术栈
 
-项目概述
-这是一个完整的 RESTful API 服务项目，提供员工管理和用户管理功能，并集成了 JWT 认证和基于角色的访问控制（RBAC）。项目采用 JHipster 风格的 JWT 实现，支持用户注册、登录、Token 认证和权限管理。
+| 技术 | 版本 | 说明 |
+|------|------|------|
+| Node.js | 24+ | JavaScript 运行时 |
+| Express.js | 4.x | Web 框架 |
+| MongoDB | 7+ | NoSQL 数据库 |
+| monk | 7.x | MongoDB 驱动 |
+| jsonwebtoken | 9.x | JWT 签发与验证 |
+| bcryptjs | 3.x | 密码加密 |
+| Joi | 17.x | 数据验证 |
+| Helmet | 7.x | HTTP 安全头 |
 
-核心功能
-员工管理（CRUD 操作）
+---
 
-用户管理（查询操作）
+## 功能特性
 
-JWT 认证（登录/注册）
+### 员工管理
 
-基于角色的访问控制（RBAC）
+| 功能 | 方法 | 端点 | 权限 |
+|------|------|------|------|
+| 获取所有员工 | GET | `/api/employees` | `ROLE_USER` |
+| 获取所有职位 | GET | `/api/employees/jobs` | `ROLE_USER` |
+| 获取单个员工 | GET | `/api/employees/:id` | `ROLE_USER` |
+| 创建员工 | POST | `/api/employees` | `ROLE_ADMIN` |
+| 更新员工 | PUT | `/api/employees/:id` | `ROLE_ADMIN` |
+| 删除员工 | DELETE | `/api/employees/:id` | `ROLE_ADMIN` |
 
-数据验证（Joi）
+### 用户管理
 
-错误处理中间件
+| 功能 | 方法 | 端点 | 权限 |
+|------|------|------|------|
+| 获取所有用户 | GET | `/api/users` | `ROLE_ADMIN` |
+| 根据用户名查询 | GET | `/api/users/username/:username` | `ROLE_USER` |
+| 根据 ID 范围查询 | GET | `/api/users/range` | `ROLE_ADMIN` |
+| 根据 ID 查询 | GET | `/api/users/:id` | `ROLE_USER` |
 
-MongoDB 数据库集成
+### 认证
 
-技术栈
-技术	版本	说明
-Node.js	14+	JavaScript 运行时
-Express.js	4.x	Web 应用框架
-MongoDB	4.x+	NoSQL 数据库
-JWT (jsonwebtoken)	9.x	JSON Web Token 认证
-bcryptjs	2.x	密码加密
-Joi	17.x	数据验证
-Nodemon	2.x	开发环境热重载
-Helmet	7.x	安全中间件
-Morgan	1.x	HTTP 请求日志
-功能特性
-1. 员工管理 (Employees)
-功能	方法	端点	权限要求
-获取所有员工	GET	/api/employees	ROLE_USER
-获取所有职位	GET	/api/employees/jobs	ROLE_USER
-根据 ID 获取员工	GET	/api/employees/:id	ROLE_USER
-创建新员工	POST	/api/employees	ROLE_ADMIN
-更新员工信息	PUT	/api/employees/:id	ROLE_ADMIN
-删除员工	DELETE	/api/employees/:id	ROLE_ADMIN
-2. 用户管理 (Users)
-功能	方法	端点	权限要求
-获取所有用户	GET	/api/users	ROLE_ADMIN
-获取所有职位	GET	/api/users/jobs	ROLE_USER
-根据 ID 范围获取用户	GET	/api/users/range	ROLE_ADMIN
-根据用户名获取用户	GET	/api/users/username/:username	ROLE_USER
-根据 ID 获取用户	GET	/api/users/:id	ROLE_USER
-3. 认证功能 (Auth)
-功能	方法	端点	权限要求
-用户注册	POST	/api/register	公开
-用户登录	POST	/api/authenticate	公开
-检查认证状态	GET	/api/authenticate	已认证
-获取当前用户信息	GET	/api/account	已认证
-4. 安全特性
-密码 bcrypt 加密（10 rounds）
+| 功能 | 方法 | 端点 | 认证 |
+|------|------|------|------|
+| 用户注册 | POST | `/api/register` | 公开 |
+| 用户登录 | POST | `/api/authenticate` | 公开 |
+| 检查认证状态 | GET | `/api/authenticate` | 已认证 |
+| 获取当前用户信息 | GET | `/api/account` | 已认证 |
 
-JWT Token 签名验证
+---
 
-基于角色的访问控制
+## 快速开始
 
-Token 过期机制（24小时）
+### 前置要求
 
-Helmet 安全头设置
+- Node.js 24+
+- MongoDB 7+（本地或远程）
+- npm
 
-项目结构
-text
-Study Project/
+### 本地运行
+
+```bash
+# 1. 克隆
+git clone https://github.com/NoctisRen/StudyProject.git
+cd StudyProject
+
+# 2. 安装依赖
+npm install
+
+# 3. 配置环境变量（参见下方说明）
+cp .env.example .env.dev
+# 编辑 .env.dev，至少设置 DB_URL 和 JWT_SECRET
+
+# 4. 启动（开发模式，支持热重载）
+npm run dev
+```
+
+应用启动后默认监听 `http://localhost:8000`。
+
+### 可用命令
+
+```bash
+npm run dev          # 开发模式（nodemon 热重载）
+npm run prod         # 生产模式
+npm test             # 运行全部测试
+npm run test:unit    # 仅单元测试
+npm run test:integration  # 仅集成测试（需 MongoDB）
+npm run test:coverage     # 测试覆盖率报告
+npm run lint         # ESLint 代码检查
+npm run lint:fix     # 自动修复 ESLint 错误
+```
+
+---
+
+## 项目结构
+
+```
+StudyProject/
 ├── src/
 │   ├── config/
-│   │   └── jwt.js                 # JWT 配置和工具函数
+│   │   └── jwt.js              # JWT 配置与工具函数
 │   ├── db/
-│   │   ├── connection.js          # MongoDB 连接
-│   │   └── schema.js              # 数据验证模式
+│   │   ├── connection.js       # MongoDB 连接（monk）
+│   │   └── schema.js           # Joi 验证模式
 │   ├── middlewares/
-│   │   ├── auth.js                # 认证和授权中间件
-│   │   ├── index.js               # 通用中间件
-│   │   └── errorHandler.js        # 错误处理
+│   │   ├── auth.js             # JWT 认证 + 角色授权中间件
+│   │   └── index.js            # 通用中间件集合
 │   ├── routes/
-│   │   ├── auth.js                # 认证路由
-│   │   ├── employees.js           # 员工路由
-│   │   └── users.js               # 用户路由
-│   ├── ui-routes/
-│   │   ├── index.js               # UI 路由
-│   │   ├── public/                # 静态资源
-│   │   └── views/                 # EJS 模板
-│   ├── app.js                     # Express 应用配置
-│   └── server.js                  # 服务器入口
-├── .env.dev                       # 开发环境配置
-├── .env.prod                      # 生产环境配置
-├── package.json                   # 项目依赖
-└── README.md                      # 项目文档
-安装与部署
-前置要求
-Node.js 14+ (下载地址)
+│   │   ├── auth.js             # 认证路由（注册/登录/状态/账户）
+│   │   ├── employees.js        # 员工 CRUD 路由
+│   │   └── users.js            # 用户管理路由
+│   ├── ui-routes/              # EJS 界面（可选）
+│   ├── app.js                  # Express 应用入口
+│   └── server.js               # 服务器启动入口
+├── tests/
+│   ├── helpers/
+│   │   └── setup.js            # 测试辅助（waitForMongo, seed, clean）
+│   ├── unit/
+│   │   ├── jwt.test.js         # JWT 工具函数单元测试（8 tests）
+│   │   └── schema.test.js      # Schema 验证单元测试（14 tests）
+│   └── integration/
+│       ├── auth.test.js        # 认证 API 集成测试（11 tests）
+│       └── employees.test.js   # 员工 API + RBAC 集成测试（25 tests）
+├── .github/workflows/
+│   ├── ci.yml                  # CI 工作流：ESLint + npm audit + build + Docker
+│   └── test.yml                # 测试工作流：单元 + 集成（MongoDB service）
+├── Dockerfile                  # 镜像构建（Node 24 Alpine）
+├── docker-compose.yml          # 容器编排（api + mongo）
+├── jest.config.js
+├── .eslintrc.js
+└── .env.example
+```
 
-MongoDB 4+ (下载地址)
+---
 
-npm 或 yarn 包管理器
+## 环境配置
 
-安装步骤
-1. 克隆项目
-bash
-git clone <your-repository-url>
-cd Study\ Project
-2. 安装依赖
-bash
-npm install
-3. 安装额外依赖（JWT 功能）
-bash
-npm install jsonwebtoken bcryptjs
-4. 配置环境变量
-bash
-# 复制开发环境配置
-copy .env.dev .env
-5. 启动 MongoDB 服务
-bash
-# Windows（以管理员身份运行）
-net start MongoDB
+### 环境变量
 
-# macOS/Linux
-sudo systemctl start mongod
-# 或
-mongod
-6. 启动应用
-bash
-# 开发模式（支持热重载）
-npm run dev
+| 变量 | 必填 | 说明 | 示例 |
+|------|------|------|------|
+| `PORT` | 否 | 服务器端口（默认 8000） | `8000` |
+| `NODE_ENV` | 否 | 运行环境 | `development` / `production` |
+| `DB_URL` | **是** | MongoDB 连接串 | `mongodb://localhost:27017/my-employees` |
+| `JWT_SECRET` | **是** | JWT 签名密钥（建议 64 位 Base64） | 见下方生成方法 |
 
-# 生产模式
-npm run prod
-7. 验证启动
-成功启动后，终端应显示：
+### 启动模式与配置加载
 
-text
-Server running on port: 8000
-MongoDB connected to: my-employees
-环境配置
-.env 文件配置
-创建 .env 文件并配置以下变量：
+应用通过 `dotenv` 按 `NODE_ENV` 加载对应的配置文件：
 
-env
-# 服务器配置
-PORT=8000
-NODE_ENV=development
+| NODE_ENV | 加载文件 | 用途 |
+|----------|---------|------|
+| `development`（默认） | `.env.development` | 本地开发 |
+| `production` | `.env.production` | 生产部署 |
+| `test` | `.env.test` | CI 测试 |
 
-# 数据库配置
-DB_URL=mongodb://dbadmin:MongoDB03@192.168.11.119:27017/my-employees?authSource=admin&readPreference=primary&ssl=false&directConnection=true
+### 生成 JWT 密钥
 
-# JWT 配置
-JWT_SECRET=your-super-secret-jwt-key-change-in-production-use-strong-key
-环境变量说明
-变量名	说明	示例值
-PORT	服务器端口	8000
-NODE_ENV	运行环境	development / production
-DB_URL	MongoDB 连接字符串	mongodb://localhost:27017/my-employees
-JWT_SECRET	JWT 签名密钥	强随机字符串（Base64 编码）
-生成强 JWT 密钥
-bash
+```bash
 # 生成 64 位 Base64 密钥
 openssl rand -base64 64
-数据库配置
-数据库信息
-数据库名称: my-employees
+```
 
-集合:
+### .env.example 示例
 
-employees - 员工信息
+```
+PORT=8000
+DB_URL=mongodb://localhost:27017/my-employees
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+```
 
-user - 用户信息
+---
 
-数据模型
-employees 集合
-json
-{
-  "_id": "ObjectId",
-  "name": "String (3-30 chars)",
-  "job": "String (3-30 chars)"
-}
-user 集合
-json
-{
-  "_id": "ObjectId",
-  "username": "String (3-50 chars, unique)",
-  "password": "String (bcrypt encrypted)",
-  "email": "String (valid email format)",
-  "roles": ["ROLE_USER", "ROLE_ADMIN"],
-  "activated": "Boolean",
-  "langKey": "String",
-  "createdBy": "String",
-  "createdDate": "Date",
-  "lastModifiedBy": "String",
-  "lastModifiedDate": "Date"
-}
-创建管理员用户
-使用 MongoDB Compass 或命令行：
+## API 端点文档
 
-javascript
-// 连接到数据库
-use my-employees
+### 认证端点
 
-// 将现有用户升级为管理员
-db.user.updateOne(
-    { username: "admin" },
-    { $set: { roles: ["ROLE_USER", "ROLE_ADMIN"] } }
-)
+#### 注册用户
 
-// 或创建新管理员
-db.user.insertOne({
-    username: "superadmin",
-    password: "$2a$10$...",  // 使用 bcrypt 加密
-    email: "admin@company.com",
-    roles: ["ROLE_USER", "ROLE_ADMIN"],
-    activated: true
-})
-JWT 认证说明
-JWT 配置
-javascript
-{
-    secret: process.env.JWT_SECRET,
-    expiresIn: 86400,  // 24 小时
-    issuer: 'your-app-name',
-    audience: 'your-app-api',
-    algorithm: 'HS256'
-}
-Token 结构
-JHipster 风格的 JWT Payload：
-
-json
-{
-    "sub": "用户ID (ObjectId)",
-    "username": "用户名",
-    "authorities": ["ROLE_USER"],
-    "iat": 签发时间戳,
-    "exp": 过期时间戳,
-    "aud": "your-app-api",
-    "iss": "your-app-name"
-}
-认证流程
-注册 → 创建新用户（密码加密）
-
-登录 → 验证凭据 → 生成 JWT Token
-
-请求 → 在 Authorization 头中携带 Token
-
-验证 → 中间件验证 Token → 挂载用户信息到 req.user
-
-授权 → 检查用户角色 → 允许/拒绝访问
-
-角色权限
-角色	权限
-ROLE_USER	读取员工和用户信息
-ROLE_ADMIN	所有操作（创建、更新、删除员工和用户）
-API 端点文档
-基础 URL
-text
-http://localhost:8000
-认证相关端点
-方法	端点	描述	认证	请求体
-POST	/api/register	用户注册	否	{username, password, email}
-POST	/api/authenticate	用户登录	否	{username, password}
-GET	/api/authenticate	检查认证状态	是	-
-GET	/api/account	获取当前用户信息	是	-
-注册请求示例
-http
-POST http://localhost:8000/api/register
+```
+POST /api/register
 Content-Type: application/json
 
 {
@@ -294,8 +222,11 @@ Content-Type: application/json
     "password": "password123",
     "email": "test@example.com"
 }
-注册响应示例
-json
+```
+
+**成功响应** `201 Created`：
+
+```json
 {
     "message": "User registered successfully",
     "user": {
@@ -307,38 +238,56 @@ json
         "langKey": "en"
     }
 }
-登录请求示例
-http
-POST http://localhost:8000/api/authenticate
+```
+
+#### 登录
+
+```
+POST /api/authenticate
 Content-Type: application/json
 
 {
     "username": "testuser",
     "password": "password123"
 }
-登录响应示例
-json
+```
+
+**成功响应** `200 OK`：
+
+```json
 {
-    "id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "id_token": "eyJhbGciOiJIUzI1NiIs...",
     "token_type": "Bearer",
     "expires_in": 86400
 }
-检查认证状态
-http
-GET http://localhost:8000/api/authenticate
-Authorization: Bearer <your-token>
-认证状态响应
-json
+```
+
+#### 检查认证状态
+
+```
+GET /api/authenticate
+Authorization: Bearer <token>
+```
+
+**成功响应**：
+
+```json
 {
     "authenticated": true,
     "username": "testuser"
 }
-获取账户信息
-http
-GET http://localhost:8000/api/account
-Authorization: Bearer <your-token>
-账户信息响应
-json
+```
+
+#### 获取账户信息
+
+```
+GET /api/account
+Authorization: Bearer <token>
+```
+
+**成功响应**：
+
+```json
 {
     "id": "69c2a7d754086124ad6a1694",
     "login": "testuser",
@@ -348,35 +297,30 @@ json
     "activated": true,
     "langKey": "en"
 }
-员工管理端点
-方法	端点	描述	认证	角色	请求体
-GET	/api/employees	获取所有员工	是	USER	-
-GET	/api/employees/jobs	获取所有职位	是	USER	-
-GET	/api/employees/:id	获取单个员工	是	USER	-
-POST	/api/employees	创建员工	是	ADMIN	{name, job}
-PUT	/api/employees/:id	更新员工	是	ADMIN	{name, job}
-DELETE	/api/employees/:id	删除员工	是	ADMIN	-
-获取所有员工
-http
-GET http://localhost:8000/api/employees
-Authorization: Bearer <your-token>
-获取所有员工响应
-json
+```
+
+### 员工端点
+
+#### 获取所有员工
+
+```
+GET /api/employees
+Authorization: Bearer <token>
+```
+
+**响应** `200 OK`：
+
+```json
 [
-    {
-        "_id": "655afa8196943302b03283bd",
-        "name": "张三",
-        "job": "工程师"
-    },
-    {
-        "_id": "655afa8196943302b03283be",
-        "name": "李四",
-        "job": "经理"
-    }
+    { "_id": "65...", "name": "张三", "job": "工程师" },
+    { "_id": "65...", "name": "李四", "job": "经理" }
 ]
-创建员工（需要 ADMIN 角色）
-http
-POST http://localhost:8000/api/employees
+```
+
+#### 创建员工（仅 ADMIN）
+
+```
+POST /api/employees
 Authorization: Bearer <admin-token>
 Content-Type: application/json
 
@@ -384,377 +328,256 @@ Content-Type: application/json
     "name": "王五",
     "job": "设计师"
 }
-创建员工响应
-json
+```
+
+**成功** `201 Created` | **权限不足** `403 Forbidden`
+
+#### 更新员工（仅 ADMIN）
+
+```
+PUT /api/employees/:id
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+
 {
-    "_id": "69c2a7d754086124ad6a1695",
-    "name": "王五",
-    "job": "设计师"
+    "name": "更新后",
+    "job": "高级工程师"
 }
-权限不足响应（403）
-json
+```
+
+#### 删除员工（仅 ADMIN）
+
+```
+DELETE /api/employees/:id
+Authorization: Bearer <admin-token>
+```
+
+**成功** `200 OK`：`{ "message": "Employee has been deleted" }`
+
+### 用户端点
+
+| 方法 | 端点 | 描述 | 权限 |
+|------|------|------|------|
+| GET | `/api/users` | 获取所有用户 | `ROLE_ADMIN` |
+| GET | `/api/users/username/:username` | 根据用户名查询 | `ROLE_USER` |
+| GET | `/api/users/range?start=&end=` | 按 ID 范围查询 | `ROLE_ADMIN` |
+| GET | `/api/users/:id` | 根据 ID 查询 | `ROLE_USER` |
+
+### 数据模型
+
+#### employees
+
+```json
 {
-    "error": "Forbidden",
-    "message": "You do not have the required permissions"
+    "_id": "ObjectId",
+    "name": "String (3-50 字符)",
+    "job": "String (3-50 字符)"
 }
-用户管理端点
-方法	端点	描述	认证	角色	请求体
-GET	/api/users	获取所有用户	是	ADMIN	-
-GET	/api/users/jobs	获取所有职位	是	USER	-
-GET	/api/users/range?start=&end=	根据 ID 范围获取用户	是	ADMIN	-
-GET	/api/users/username/:username	根据用户名获取用户	是	USER	-
-GET	/api/users/:id	根据 ID 获取用户	是	USER	-
-根据用户名获取用户
-http
-GET http://localhost:8000/api/users/username/testuser
-Authorization: Bearer <your-token>
-根据用户名获取用户响应
-json
+```
+
+#### user
+
+```json
 {
-    "_id": "69c2a7d754086124ad6a1694",
-    "username": "testuser",
-    "email": "test@example.com",
+    "_id": "ObjectId",
+    "username": "String (3-50 字符, 唯一)",
+    "password": "String (bcrypt 加密)",
+    "email": "String (有效邮箱格式)",
     "roles": ["ROLE_USER"],
-    "activated": true
+    "activated": true,
+    "langKey": "en",
+    "createdBy": "system",
+    "createdDate": "Date"
 }
-错误响应格式
-401 Unauthorized
-json
+```
+
+### 错误响应格式
+
+| 状态码 | 说明 |
+|--------|------|
+| `200` | 成功 |
+| `201` | 创建成功 |
+| `400` | 请求参数无效 |
+| `401` | 未认证（缺少/无效 Token） |
+| `403` | 无权限（角色不足） |
+| `404` | 资源不存在 |
+| `409` | 资源冲突（已存在） |
+| `500` | 服务器内部错误 |
+
+**401 示例**：
+
+```json
 {
     "error": "Authentication required",
     "title": "Unauthorized",
     "status": 401,
     "message": "No token provided"
 }
-400 Bad Request
-json
+```
+
+**403 示例**：
+
+```json
 {
-    "error": "Validation error",
-    "message": "Username must be at least 3 characters"
+    "error": "Forbidden",
+    "message": "You do not have the required permissions"
 }
-404 Not Found
-json
-{
-    "error": "User not found"
-}
-409 Conflict
-json
-{
-    "error": "Username already exists",
-    "message": "Please choose a different username"
-}
-常见状态码
-状态码	说明
-200	成功
-201	创建成功
-400	请求参数错误
-401	未认证（缺少或无效 Token）
-403	无权限（角色不足）
-404	资源不存在
-409	资源已存在（冲突）
-500	服务器内部错误
-测试指南
-使用 Apidog 测试
-1. 安装 Apidog
-访问 https://apidog.com/ 下载并安装
+```
 
-2. 创建环境变量
-打开 Apidog → 环境管理
+---
 
-创建新环境 "本地开发"
+## 测试指南
 
-添加变量：
+### 自动化测试（推荐）
 
-baseUrl: http://localhost:8000
+项目使用 **Jest + Supertest** 进行自动化测试，共 **58 个测试用例**：
 
-token: 空
+```bash
+# 全部测试
+npm test
 
-3. 配置自动保存 Token
-在登录请求（POST /api/authenticate）的"后置操作"中添加：
+# 仅单元测试
+npm run test:unit
 
-javascript
-const response = pm.response.json();
-if (response.id_token) {
-    pm.environment.set("token", response.id_token);
-}
-4. 使用 Token
-在所有需要认证的请求中，Headers 设置：
+# 仅集成测试（需运行中的 MongoDB）
+npm run test:integration
 
-Key: Authorization
+# 测试覆盖率报告
+npm run test:coverage
+```
 
-Value: Bearer {{token}}
+### 测试分类
 
-完整测试用例
-测试 1: 用户注册
-http
-POST {{baseUrl}}/api/register
-Content-Type: application/json
+| 类型 | 文件 | 测试数 | 依赖 |
+|------|------|--------|------|
+| 单元测试 | `tests/unit/jwt.test.js` | 8 | 无 |
+| 单元测试 | `tests/unit/schema.test.js` | 14 | 无 |
+| 集成测试 | `tests/integration/auth.test.js` | 11 | MongoDB |
+| 集成测试 | `tests/integration/employees.test.js` | 25 | MongoDB |
 
-{
-    "username": "testuser",
-    "password": "password123",
-    "email": "test@example.com"
-}
-预期响应: 201 Created
+### 手动测试（curl）
 
-测试 2: 用户登录
-http
-POST {{baseUrl}}/api/authenticate
-Content-Type: application/json
-
-{
-    "username": "testuser",
-    "password": "password123"
-}
-预期响应:
-
-json
-{
-    "id_token": "eyJhbGciOiJIUzI1NiIs...",
-    "token_type": "Bearer",
-    "expires_in": 86400
-}
-测试 3: 检查认证状态
-http
-GET {{baseUrl}}/api/authenticate
-Authorization: Bearer {{token}}
-预期响应:
-
-json
-{
-    "authenticated": true,
-    "username": "testuser"
-}
-测试 4: 获取员工列表
-http
-GET {{baseUrl}}/api/employees
-Authorization: Bearer {{token}}
-预期响应: 员工数组
-
-测试 5: 创建员工（权限测试）
-http
-POST {{baseUrl}}/api/employees
-Authorization: Bearer {{token}}
-Content-Type: application/json
-
-{
-    "name": "新员工",
-    "job": "工程师"
-}
-预期响应（普通用户）: 403 Forbidden
-
-测试 6: 无 Token 访问
-http
-GET {{baseUrl}}/api/employees
-预期响应: 401 Unauthorized
-
-使用 curl 测试
-登录获取 Token
-bash
-curl -X POST http://localhost:8000/api/authenticate \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
-使用 Token 访问 API
-bash
-curl -X GET http://localhost:8000/api/employees \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE"
-检查认证状态
-bash
-curl -X GET http://localhost:8000/api/authenticate \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE"
-创建员工（管理员）
-bash
-curl -X POST http://localhost:8000/api/employees \
-  -H "Authorization: Bearer ADMIN_TOKEN_HERE" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"管理员创建","job":"CTO"}'
-使用 PowerShell 测试
-powershell
+```bash
 # 登录
-$body = @{username="admin"; password="admin123"} | ConvertTo-Json
-$response = Invoke-RestMethod -Uri "http://localhost:8000/api/authenticate" `
-    -Method Post -Body $body -ContentType "application/json"
-$token = $response.id_token
-Write-Host "Token: $token"
+TOKEN=$(curl -s -X POST http://localhost:8000/api/authenticate \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}' | node -pe "JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).id_token")
 
 # 获取员工列表
-Invoke-RestMethod -Uri "http://localhost:8000/api/employees" `
-    -Headers @{Authorization = "Bearer $token"}
+curl -s http://localhost:8000/api/employees \
+  -H "Authorization: Bearer $TOKEN"
 
-# 获取账户信息
-Invoke-RestMethod -Uri "http://localhost:8000/api/account" `
-    -Headers @{Authorization = "Bearer $token"}
+# 创建员工（管理员）
+curl -s -X POST http://localhost:8000/api/employees \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"name":"新员工","job":"工程师"}'
+```
 
-# 检查认证状态
-Invoke-RestMethod -Uri "http://localhost:8000/api/authenticate" `
-    -Headers @{Authorization = "Bearer $token"}
-测试清单
-序号	测试项	端点	方法	预期状态码
-1	用户注册	/api/register	POST	201
-2	用户登录	/api/authenticate	POST	200
-3	认证状态检查	/api/authenticate	GET	200
-4	获取账户信息	/api/account	GET	200
-5	获取员工列表	/api/employees	GET	200
-6	创建员工（普通用户）	/api/employees	POST	403
-7	创建员工（管理员）	/api/employees	POST	201
-8	获取所有用户	/api/users	GET	403
-9	获取特定用户	/api/users/username/:username	GET	200
-10	无 Token 访问	/api/employees	GET	401
-11	无效 Token	/api/employees	GET	401
-12	更新员工（管理员）	/api/employees/:id	PUT	200
-13	删除员工（管理员）	/api/employees/:id	DELETE	200
-常见问题
-Q1: 启动时提示端口被占用
-解决方案: 修改 .env 文件中的 PORT 值
+### 使用 Apidog
 
-env
-PORT=3001
-Q2: MongoDB 连接失败
-解决方案:
+1. 打开 Apidog，创建环境"本地开发"
+2. 设置变量：`baseUrl: http://localhost:8000`，`token: 空`
+3. 在登录请求的"后置操作"中加入：
+   ```javascript
+   const response = pm.response.json();
+   if (response.id_token) {
+       pm.environment.set("token", response.id_token);
+   }
+   ```
+4. 所有需认证的请求添加 Header：`Authorization: Bearer {{token}}`
 
-检查 MongoDB 服务是否运行
+---
 
-bash
-# Windows
-net start MongoDB
+## Docker 部署
 
-# macOS/Linux
-sudo systemctl start mongod
-检查 .env 中的 DB_URL 是否正确
+详见 [DOCKER.md](./DOCKER.md)。
 
-检查网络连接（如果使用远程数据库）
+```bash
+# 构建并启动
+docker compose up -d --build
 
-Q3: JWT Token 验证失败
-解决方案:
+# 验证
+curl -s http://localhost:8000/api/authenticate
+# 返回 401 说明服务正常运行
 
-确保 Token 格式正确：Bearer <token>（注意空格）
+# 停止
+docker compose down -v
+```
 
-检查 Token 是否过期
+---
 
-确认 JWT_SECRET 与生成时一致
+## CI/CD
 
-检查 Token 是否被截断或包含换行符
+项目包含两个 GitHub Actions 工作流：
 
-Q4: 普通用户无法创建员工
-解决方案: 这是正常行为，需要将用户角色设置为 ROLE_ADMIN
+### CI（`ci.yml`）
 
-Q5: 如何创建管理员用户
-解决方案: 通过 MongoDB 命令行或 Compass 更新用户角色
+| Job | 说明 | 触发条件 |
+|-----|------|---------|
+| 代码检查 | ESLint 静态分析 | push + PR |
+| 安全审计 | npm audit 漏洞扫描 | push + PR |
+| 构建验证 | Node 语法 + 依赖检查 | push + PR |
+| Docker 构建 | Buildx 镜像构建（不推送） | push + PR |
 
-javascript
-// 连接到数据库
-use my-employees
+### Tests（`test.yml`）
 
-// 更新用户角色
+| Job | 说明 | 依赖 |
+|-----|------|------|
+| 单元测试 | 22 个测试 | 无 |
+| 集成测试 | 36 个测试 | GitHub Actions `services.mongo` |
+
+---
+
+## 常见问题
+
+### MongoDB 连接失败
+
+```bash
+# 检查 MongoDB 是否运行
+mongosh --eval "db.runCommand({ping:1})"
+
+# 确认 .env.* 中的 DB_URL 正确
+env | grep DB_URL
+```
+
+### JWT Token 验证失败
+
+- 确保格式为 `Bearer <token>`（Bearer 后有空格）
+- 确认 Token 未过期（默认 24h）
+- 确认 `JWT_SECRET` 与登录时一致
+
+### 普通用户无法创建/修改员工
+
+这是正常行为，需将用户角色提升为 `ROLE_ADMIN`：
+
+```javascript
+// 在 MongoDB 中执行
 db.user.updateOne(
     { username: "your-username" },
     { $set: { roles: ["ROLE_USER", "ROLE_ADMIN"] } }
 )
-Q6: Token 如何刷新
-解决方案: 当前实现需要重新登录获取新 Token，可后续添加 refresh token 功能
+```
 
-Q7: 生产环境部署注意事项
-使用强 JWT_SECRET（至少 64 位随机字符串）
+### 端口被占用
 
-启用 HTTPS
+修改 `PORT` 环境变量：
+```bash
+export PORT=3001
+npm run dev
+```
 
-设置合理的 Token 过期时间
+---
 
-限制 API 请求频率
+## 安全建议
 
-配置 CORS 策略
+- 生产环境使用强 `JWT_SECRET`（`openssl rand -base64 64`）
+- 生产环境启用 HTTPS
+- 完善用户输入校验（已有 Joi）
+- 启用 API 请求限流
+- CORS 配置白名单
+- 定期更新 npm 依赖（`npm audit`）
 
-使用 PM2 或类似工具管理进程
+---
 
-Q8: 如何查看数据库中的数据
-解决方案: 使用 MongoDB Compass 图形化工具
-
-下载安装 MongoDB Compass
-
-连接字符串：mongodb://localhost:27017
-
-选择数据库 my-employees
-
-查看 employees 和 user 集合
-
-Q9: 密码加密原理
-解决方案: 使用 bcrypt 加密，每次加密结果不同
-
-javascript
-const bcrypt = require('bcryptjs');
-const hashedPassword = await bcrypt.hash(password, 10);
-const isValid = await bcrypt.compare(password, hashedPassword);
-Q10: 如何测试 Token 过期
-解决方案: 修改 JWT 配置临时测试
-
-在 src/config/jwt.js 中临时修改：
-
-javascript
-expiresIn: 60, // 改为60秒
-然后重启应用，登录获取 Token，等待 60 秒后测试
-
-安全建议
-1. JWT 密钥管理
-不要将密钥提交到版本控制
-
-使用环境变量存储
-
-定期更换密钥
-
-使用强随机字符串（openssl rand -base64 64）
-
-2. 密码安全
-使用 bcrypt 加密（salt rounds ≥ 10）
-
-设置密码强度要求（最小长度、包含数字和特殊字符）
-
-禁止使用常见密码
-
-3. Token 安全
-设置合理的过期时间（建议 24 小时）
-
-使用 HTTPS 传输
-
-不要在 URL 中传递 Token
-
-实现 Token 黑名单机制（可选）
-
-4. API 安全
-实现请求限流（rate limiting）
-
-验证所有输入数据
-
-使用 Helmet 中间件
-
-配置 CORS 白名单
-
-记录所有 API 访问日志
-
-5. 数据库安全
-使用强密码
-
-限制数据库访问 IP
-
-定期备份数据
-
-使用 MongoDB 认证
-
-贡献指南
-欢迎提交 Issue 和 Pull Request！
-
-提交 Issue 时请包含：
-问题描述
-
-错误日志
-
-环境信息（Node.js 版本、MongoDB 版本等）
-
-重现步骤
-
-许可证
-MIT License
-
-联系方式
-如有问题，请提交 Issue 或联系项目维护者。
-
-最后更新: 2026-03-24
+MIT License. 最后更新: 2026-06-15
