@@ -58,14 +58,6 @@ jobs:
 
       - run: npm ci
 
-      - name: Wait for MongoDB (via mongosh in container)
-        run: |
-          for i in $(seq 1 30); do
-            docker exec $(docker ps -q --filter ancestor=mongo:7) mongosh --quiet --eval 'db.runCommand({ping:1}).ok' 2>/dev/null && echo 'MongoDB ready' && break
-            echo "Waiting for MongoDB... ($i)"
-            sleep 1
-          done
-
       - name: Run integration tests
         run: npx jest tests/integration --ci --verbose
         env:
