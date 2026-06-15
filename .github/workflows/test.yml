@@ -76,10 +76,9 @@ jobs:
           "
 
       - name: Run integration tests
-        run: |
-          npx jest tests/integration --ci --verbose 2>&1 | tee jest-output.txt
-          exit ${PIPESTATUS[0]}
+        run: npx jest tests/integration --ci --verbose --forceExit 2>&1 | tee jest-output.txt
         env:
+          NODE_ENV: test
           DB_URL: mongodb://localhost:27017/test-my-employees
           JWT_SECRET: test-secret-for-ci-only
 
