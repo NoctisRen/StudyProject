@@ -58,14 +58,10 @@ jobs:
 
       - run: npm ci
 
-      - name: Wait for MongoDB
+      - name: Wait for MongoDB (via mongosh in container)
         run: |
           for i in $(seq 1 30); do
-            node -e "
-              const http = require('http');
-              const req = http.get('http://localhost:27017', (res) => { process.exit(0); });
-              req.on('error', () => process.exit(1));
-            " && echo 'MongoDB ready' && break
+            docker exec $(docker ps -q --filter ancestor=mongo:7) mongosh --quiet --eval 'db.runCommand({ping:1}).ok' 2>/dev/null && echo 'MongoDB ready' && break
             echo "Waiting for MongoDB... ($i)"
             sleep 1
           done
