@@ -10,7 +10,11 @@
     "lint:fix": "eslint . --fix",
     "lint:src": "eslint src/",
     "lint:app": "eslint app.js server.js",
-    "lint:server": "eslint src/server.js"
+    "lint:server": "eslint src/server.js",
+    "test": "jest",
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration",
+    "test:coverage": "jest --coverage"
   },
   "repository": {
     "type": "git",
@@ -42,6 +46,8 @@
     "eslint": "^7.32.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.32.0",
-    "nodemon": "^2.0.12"
+    "jest": "^30.4.2",
+    "nodemon": "^2.0.12",
+    "supertest": "^7.2.2"
   }
 }

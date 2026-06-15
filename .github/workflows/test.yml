@@ -1,0 +1,73 @@
+# =============================================================================
+# Phase 2: Tests - 自动化测试
+# 触发条件：push 到 main/develop + PR 到 main
+# =============================================================================
+name: Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_VERSION: 24
+
+jobs:
+  # ── Job 1: 单元测试（不需要数据库） ─────────────────────────────────────────
+  unit:
+    name: 单元测试
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Run unit tests
+        run: npx jest tests/unit --ci --verbose
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-unit
+          path: coverage/
+          if-no-files-found: ignore
+
+  # ── Job 2: 集成测试（需要临时 MongoDB） ────────────────────────────────────
+  integration:
+    name: 集成测试
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Wait for MongoDB
+        run: |
+          for i in $(seq 1 30); do
+            nc -z localhost 27017 && echo "MongoDB ready" && break
+            echo "Waiting for MongoDB... ($i)"
+            sleep 1
+          done
+
+      - name: Run integration tests
+        run: npx jest tests/integration --ci --verbose
+        env:
+          DB_URL: mongodb://localhost:27017/test-my-employees
+          JWT_SECRET: ***
