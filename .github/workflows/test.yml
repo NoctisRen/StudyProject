@@ -61,7 +61,11 @@ jobs:
       - name: Wait for MongoDB
         run: |
           for i in $(seq 1 30); do
-            nc -z localhost 27017 && echo "MongoDB ready" && break
+            if command -v mongosh &> /dev/null; then
+              mongosh --quiet mongodb://localhost:27017/admin --eval 'db.runCommand({ ping: 1 }).ok' && echo 'MongoDB ready' && break
+            elif command -v mongo &> /dev/null; then
+              mongo --quiet mongodb://localhost:27017/admin --eval 'db.runCommand({ ping: 1 }).ok' && echo 'MongoDB ready' && break
+            fi
             echo "Waiting for MongoDB... ($i)"
             sleep 1
           done
@@ -70,4 +74,4 @@ jobs:
         run: npx jest tests/integration --ci --verbose
         env:
           DB_URL: mongodb://localhost:27017/test-my-employees
-          JWT_SECRET: ***
+          JWT_SECRET: test-secret-for-ci-only
