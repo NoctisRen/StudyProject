@@ -1,0 +1,78 @@
+# =============================================================================
+# Phase 1: CI - 基础代码质量门禁
+# 触发条件：push 到任意分支 + PR 到 main
+# =============================================================================
+name: CI
+
+on:
+  push:
+    branches: [main, develop, 'feature/**']
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: 20
+
+jobs:
+  # ── Job 1: ESLint 代码检查 ────────────────────────────────────────────────
+  lint:
+    name: 代码检查 (ESLint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+  # ── Job 2: npm 安全审计 ───────────────────────────────────────────────────
+  audit:
+    name: 安全审计 (npm audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Run npm audit (high severity only)
+        run: npm audit --audit-level=high
+        # 仅警告不阻断，方便后续逐步修复
+        continue-on-error: true
+
+  # ── Job 3: 构建验证 ───────────────────────────────────────────────────────
+  build-check:
+    name: 构建验证
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Syntax & dependency check
+        run: |
+          # 语法检查（不需要连数据库）
+          node --check src/server.js
+          node --check src/app.js
+          node --check src/config/jwt.js
+          node --check src/middlewares/auth.js
+          node --check src/routes/auth.js
+          node --check src/routes/employees.js
+          node --check src/routes/users.js
+          node --check src/db/schema.js
+          echo "✅ All source files pass syntax check"
